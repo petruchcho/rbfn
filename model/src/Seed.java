@@ -34,7 +34,7 @@ public class Seed implements data.ClassifiedData {
     }
 
     @Override
-    public Vector getVector() {
+    public Vector asVector() {
         return makeVector();
     }
 
