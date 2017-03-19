@@ -24,4 +24,29 @@ public class DataHolder<T extends Data> {
     public List<T> getData() {
         return data;
     }
+
+    public void normalize() {
+        if (data == null || data.isEmpty()) {
+            return;
+        }
+        int vectorSize = data.get(0).asVector().getSize();
+        for (int i = 0; i < vectorSize; i++) {
+            double sum = 0;
+            for (Data data : data) {
+                sum += data.getValueAt(i) * data.getValueAt(i);
+            }
+            sum = Math.sqrt(sum);
+            for (Data data : data) {
+                double value = data.getValueAt(i);
+                data.setValueAt(i, value / sum);
+            }
+        }
+    }
+
+    public int getVectorSize() {
+        if (data == null || data.isEmpty()) {
+            return 0;
+        }
+        return data.get(0).asVector().getSize();
+    }
 }

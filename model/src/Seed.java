@@ -22,6 +22,8 @@ public class Seed implements data.ClassifiedData {
 
     private final int classId;
 
+    private final Vector vector;
+
     public Seed(double area, double perimeter, double compactness, double kernelLength, double kernelWidth, double asymmetryCoefficient, double kernelGrooveLength, int classId) {
         this.area = area;
         this.perimeter = perimeter;
@@ -31,11 +33,23 @@ public class Seed implements data.ClassifiedData {
         this.asymmetryCoefficient = asymmetryCoefficient;
         this.kernelGrooveLength = kernelGrooveLength;
         this.classId = classId;
+
+        this.vector = makeVector();
     }
 
     @Override
     public Vector asVector() {
-        return makeVector();
+        return vector;
+    }
+
+    @Override
+    public double getValueAt(int index) {
+        return vector.v()[index];
+    }
+
+    @Override
+    public void setValueAt(int index, double value) {
+        vector.v()[index] = value;
     }
 
     private Vector makeVector() {

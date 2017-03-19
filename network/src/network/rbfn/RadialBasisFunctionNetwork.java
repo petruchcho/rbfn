@@ -14,6 +14,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
     private RadialBasisFunctionNeuron[] neurons;
     private double[] w;
     private double learningStep;
+    private double initLearningStep = 0.001;
     private Random random = new Random(123987);
 
     public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize) {
@@ -24,7 +25,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
     }
 
     private void initValues(int neuronsCount) {
-        learningStep = 0.001;
+        learningStep = 0.01;
         for (int i = 0; i < neuronsCount; i++) {
             w[i] = 1;
             neurons[i] = new RadialBasisFunctionNeuron(N);
@@ -32,8 +33,19 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         }
     }
 
-    private void initLearn(Data data) {
+    public void initLearn(Data data) {
+        int w = 0;
+        for (int neuronId = 1; neuronId < getNeuronsCount(); neuronId++) {
+            if (neurons[neuronId].getDistToCenter(data.asVector()) < neurons[w].getDistToCenter(data.asVector())) {
+                w = neuronId;
+            }
+        }
 
+        for (int neuronId = 0; neuronId < getNeuronsCount(); neuronId++) {
+            neurons[neuronId].moveCenter(data.asVector(), neuronId == w ? initLearningStep : -initLearningStep);
+        }
+
+        initLearningStep *= 0.95;
     }
 
     @Override
@@ -49,7 +61,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
             neurons[i].modify(y, d, u[i], w[i], x, learningStep);
         }
         for (int i = 0; i < w.length; i++) {
-            w[i] -= learningStep * deltaW[i];
+            w[i] += learningStep * deltaW[i];
         }
     }
 

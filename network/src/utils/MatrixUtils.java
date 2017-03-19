@@ -1,5 +1,7 @@
 package utils;
 
+import java.awt.geom.Point2D;
+
 public class MatrixUtils {
     private MatrixUtils() {
     }
@@ -22,5 +24,14 @@ public class MatrixUtils {
             result += a[i] * b[i];
         }
         return result;
+    }
+
+    public static double getDist(double[] v1, double[] v2) {
+        double length = 0;
+        for (int i = 0; i < v1.length; i++) {
+            double dv = v1[i] - v2[i];
+            length += dv * dv;
+        }
+        return Math.sqrt(length);
     }
 }
