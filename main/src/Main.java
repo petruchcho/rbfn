@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) {
         DataHolder<Seed> seedHolder = new DataHolder<>(new SeedReader());
         seedHolder.normalize();
-        RadialBasisFunctionNetwork network = new RadialBasisFunctionNetwork(3, seedHolder.getVectorSize());
+        RadialBasisFunctionNetwork network = new RadialBasisFunctionNetwork(seedHolder.getVectorSize(), seedHolder.getVectorSize());
 
         ArrayDeque<Seed>[] seedsByClass = new ArrayDeque[4];
         for (Seed data : seedHolder.getData()) {
@@ -17,21 +17,27 @@ public class Main {
             }
             seedsByClass[data.getClassId()].add(data);
         }
-        for (int iter = 0; iter < 10; iter++) {
+        for (int iter = 0; iter < 20; iter++) {
             for (int i = 1; i <= 3; i++) {
                 network.initLearn(seedsByClass[i].pollFirst());
             }
         }
 
         Collections.shuffle(seedHolder.getData());
-        for (int iter = 0; iter < 50; iter++) {
+        for (int iter = 0; iter < 2400; iter++) {
             for (Seed data : seedHolder.getData()) {
                 network.learn(data);
             }
         }
 
+        int correct = 0;
         for (Seed data : seedHolder.getData()) {
+            if (data.getClassId() == network.classify(data)) {
+                correct++;
+            }
             System.out.println(data.getClassId() + " " + network.calculateOutput(data.asVector()));
         }
+
+        System.out.printf("Correctly classified = %.2f percents", correct * 100.0 / seedHolder.getData().size());
     }
 }

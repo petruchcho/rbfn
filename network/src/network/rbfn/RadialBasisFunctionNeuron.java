@@ -9,7 +9,7 @@ import java.util.Random;
 class RadialBasisFunctionNeuron implements Neuron {
 
     private final int N;
-    private double[] c;
+    double[] c;
     private double[][] Q;
 
     RadialBasisFunctionNeuron(int inputVectorSize) {
@@ -20,8 +20,8 @@ class RadialBasisFunctionNeuron implements Neuron {
 
     void initValues(Random random) {
         for (int i = 0; i < N; i++) {
-            c[i] = 0;
-            Q[i][i] = 1;
+            c[i] = random.nextDouble();
+            Q[i][i] = 22; //22
         }
     }
 
@@ -35,7 +35,11 @@ class RadialBasisFunctionNeuron implements Neuron {
 
     @Override
     public double output(Vector v) {
-        double[] vector = MatrixUtils.multiply(Q, v.v());
+        double[] difVector = new double[v.v().length];
+        for (int i = 0; i < difVector.length; i++) {
+            difVector[i] = v.v()[i] - c[i];
+        }
+        double[] vector = MatrixUtils.multiply(Q, difVector);
         return Math.exp(-0.5 * MatrixUtils.multiply(vector, vector));
     }
 
@@ -43,7 +47,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         return MatrixUtils.getDist(c, v.v());
     }
 
-    void modify(int y, double d, double u, double w, Vector x, double learningStep) {
+    void modify(double y, double d, double u, double w, Vector x, double learningStep) {
         double[] deltaC = calculateDeltaC(y, d, u, w, x);
         double[][] deltaQ = calculateDeltaQ(y, d, u, w, x);
         for (int i = 0; i < N; i++) {
@@ -56,7 +60,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         }
     }
 
-    private double[][] calculateDeltaQ(int y, double d, double u, double w, Vector x) {
+    private double[][] calculateDeltaQ(double y, double d, double u, double w, Vector x) {
         double[][] deltaQ = new double[N][N];
         for (int j = 0; j < N; j++) {
             for (int r = 0; r < N; r++) {
@@ -66,7 +70,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         return deltaQ;
     }
 
-    private double[] calculateDeltaC(int y, double d, double u, double w, Vector x) {
+    private double[] calculateDeltaC(double y, double d, double u, double w, Vector x) {
         double[] deltaC = new double[N];
         for (int j = 0; j < N; j++) {
             for (int r = 0; r < N; r++) {

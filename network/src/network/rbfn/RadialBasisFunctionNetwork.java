@@ -4,7 +4,9 @@ import data.ClassifiedData;
 import data.Data;
 import data.Vector;
 import network.ClassificationNetwork;
+import network.Neuron;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class RadialBasisFunctionNetwork implements ClassificationNetwork {
@@ -14,8 +16,9 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
     private RadialBasisFunctionNeuron[] neurons;
     private double[] w;
     private double learningStep;
-    private double initLearningStep = 0.001;
+    private double initLearningStep = 0.002;
     private Random random = new Random(123987);
+    boolean firstInit = false;
 
     public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize) {
         w = new double[neuronsCount + 1];
@@ -25,27 +28,45 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
     }
 
     private void initValues(int neuronsCount) {
-        learningStep = 0.01;
+        learningStep = 3 * 1e-7;
         for (int i = 0; i < neuronsCount; i++) {
-            w[i] = 1;
+            w[i] = random.nextDouble();
             neurons[i] = new RadialBasisFunctionNeuron(N);
             neurons[i].initValues(random);
         }
     }
 
     public void initLearn(Data data) {
+        if (!firstInit) {
+            for (RadialBasisFunctionNeuron neuron : neurons) {
+                for (int i = 0; i < neuron.c.length; i++) {
+                    neuron.c[i] = data.getValueAt(i) + random.nextDouble() / 100;
+                }
+            }
+            firstInit = true;
+            return;
+        }
+        RadialBasisFunctionNeuron closestNeuron = getClosestNeuron(data);
+
+        for (RadialBasisFunctionNeuron neuron : neurons) {
+            if (neuron == closestNeuron) {
+                neuron.moveCenter(data.asVector(), initLearningStep);
+            } else {
+                neuron.moveCenter(data.asVector(), -initLearningStep);
+            }
+        }
+
+        initLearningStep *= 0.9;
+    }
+
+    private RadialBasisFunctionNeuron getClosestNeuron(Data data) {
         int w = 0;
         for (int neuronId = 1; neuronId < getNeuronsCount(); neuronId++) {
             if (neurons[neuronId].getDistToCenter(data.asVector()) < neurons[w].getDistToCenter(data.asVector())) {
                 w = neuronId;
             }
         }
-
-        for (int neuronId = 0; neuronId < getNeuronsCount(); neuronId++) {
-            neurons[neuronId].moveCenter(data.asVector(), neuronId == w ? initLearningStep : -initLearningStep);
-        }
-
-        initLearningStep *= 0.95;
+        return neurons[w];
     }
 
     @Override
@@ -70,7 +91,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         for (int i = 0; i < getNeuronsCount(); i++) {
             deltaW[i] = Math.exp(-0.5 * u[i]) * (y - d);
         }
-        deltaW[getNeuronsCount()] = y - d;
+        deltaW[getNeuronsCount()] = -(y - d);
         return deltaW;
     }
 
