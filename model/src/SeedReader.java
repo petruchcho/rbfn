@@ -34,6 +34,14 @@ public class SeedReader implements DataReader<Seed> {
         double kernelGrooveLength = Double.parseDouble(tokenizer.nextToken());
         int classId = Integer.parseInt(tokenizer.nextToken());
 
-        return new Seed(area, perimeter, compactness, kernelLength, kernelWidth, asymmetryCoefficient, kernelGrooveLength, classId);
+        return new Seed(
+                area * area * area,
+                perimeter * perimeter * perimeter,
+                compactness * compactness * compactness,
+                kernelLength * kernelLength * kernelLength,
+                kernelWidth * kernelWidth * kernelWidth,
+                asymmetryCoefficient * asymmetryCoefficient * asymmetryCoefficient,
+                kernelGrooveLength * kernelGrooveLength * kernelGrooveLength,
+                classId);
     }
 }
