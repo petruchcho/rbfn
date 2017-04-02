@@ -4,6 +4,7 @@ import data.Vector;
 import network.Neuron;
 import utils.MatrixUtils;
 
+import java.util.Arrays;
 import java.util.Random;
 
 class RadialBasisFunctionNeuron implements Neuron {
@@ -20,8 +21,8 @@ class RadialBasisFunctionNeuron implements Neuron {
 
     void initValues(Random random) {
         for (int i = 0; i < N; i++) {
-            c[i] = random.nextDouble();
-            Q[i][i] = 1; //22
+            c[i] = 0;//random.nextDouble();
+            Q[i][i] = 1.25; //22
         }
     }
 
@@ -43,7 +44,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         return Math.exp(-0.5 * MatrixUtils.multiply(vector, vector));
     }
 
-    public double getDistToCenter(Vector v) {
+    double getDistToCenter(Vector v) {
         return MatrixUtils.getDist(c, v.v());
     }
 
@@ -81,11 +82,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         return deltaC;
     }
 
-    public void moveCenter(Vector x, double learningStep) {
-        double[] c = new double[N];
-        for (int i = 0; i < N; i++) {
-            c[i] = this.c[i] + learningStep * (x.v()[i] - this.c[i]);
-        }
-        this.c = c;
+    void setCenter(Vector center) {
+        this.c = Arrays.copyOf(center.v(), center.v().length);
     }
 }

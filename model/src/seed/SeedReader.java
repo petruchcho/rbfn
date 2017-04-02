@@ -1,3 +1,5 @@
+package seed;
+
 import data.DataReader;
 
 import java.io.BufferedReader;
@@ -35,13 +37,13 @@ public class SeedReader implements DataReader<Seed> {
         int classId = Integer.parseInt(tokenizer.nextToken());
 
         return new Seed(
-                area * area * area,
-                perimeter * perimeter * perimeter,
-                compactness * compactness * compactness,
-                kernelLength * kernelLength * kernelLength,
-                kernelWidth * kernelWidth * kernelWidth,
-                asymmetryCoefficient * asymmetryCoefficient * asymmetryCoefficient,
-                kernelGrooveLength * kernelGrooveLength * kernelGrooveLength,
+                area,
+                perimeter,
+                compactness,
+                kernelLength,
+                kernelWidth,
+                asymmetryCoefficient,
+                kernelGrooveLength,
                 classId);
     }
 }

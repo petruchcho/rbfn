@@ -4,7 +4,7 @@ import data.ClassifiedData;
 import data.Data;
 
 public interface ClassificationNetwork {
-    void learn(ClassifiedData data);
+    void train(ClassifiedData data);
 
     int classify(Data data);
 }

@@ -25,7 +25,7 @@ public class DataHolder<T extends Data> {
         return data;
     }
 
-    public void normalize() {
+    public void normalizeData() {
         if (data == null || data.isEmpty()) {
             return;
         }

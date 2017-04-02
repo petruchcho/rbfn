@@ -1,3 +1,5 @@
+package seed;
+
 import data.Vector;
 
 public class Seed implements data.ClassifiedData {
