@@ -32,11 +32,11 @@ public class DataHolder<T extends Data> {
         int vectorSize = data.get(0).asVector().getSize();
         for (int i = 0; i < vectorSize; i++) {
             double sum = 0;
-            for (Data data : data) {
+            for (Data data : this.data) {
                 sum += data.getValueAt(i) * data.getValueAt(i);
             }
             sum = Math.sqrt(sum);
-            for (Data data : data) {
+            for (Data data : this.data) {
                 double value = data.getValueAt(i);
                 data.setValueAt(i, value / sum);
             }

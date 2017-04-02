@@ -7,7 +7,7 @@ import seed.SeedReader;
 
 import java.util.*;
 
-public class Main {
+public class MainRadial {
 
     private static final int INTERNAL_NEURONS_COUNT = 9;
     private static final int OUTPUT_NEURONS_COUNT = 3;

@@ -35,10 +35,10 @@ class RadialBasisFunctionNeuron implements Neuron {
     }
 
     @Override
-    public double output(Vector v) {
-        double[] difVector = new double[v.v().length];
+    public double output(double[] v) {
+        double[] difVector = new double[v.length];
         for (int i = 0; i < difVector.length; i++) {
-            difVector[i] = v.v()[i] - c[i];
+            difVector[i] = v[i] - c[i];
         }
         double[] vector = MatrixUtils.multiply(Q, difVector);
         return Math.exp(-0.5 * MatrixUtils.multiply(vector, vector));

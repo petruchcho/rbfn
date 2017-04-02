@@ -101,7 +101,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         for (int j = 0; j < outputVectorSize; j++) {
             output[j] = getW0(j);
             for (int i = 0; i < neurons.length; i++) {
-                output[j] += neurons[i].output(v) * weights[j][i];
+                output[j] += neurons[i].output(v.v()) * weights[j][i];
             }
         }
         return output;
