@@ -5,10 +5,7 @@ import data.Data;
 import data.Vector;
 import network.ClassificationNetwork;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class RadialBasisFunctionNetwork implements ClassificationNetwork {
 
@@ -18,7 +15,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
     private RadialBasisFunctionNeuron[] neurons;
     private double[][] weights;
     private double learningStep;
-    private Random random = new Random(123987);
+    private Random random = new Random();
 
     public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize, int outputVectorSize) {
         this.argumentsCount = inputVectorSize;
@@ -32,7 +29,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         learningStep = 0.000005;
         for (int i = 0; i < neuronsCount; i++) {
             for (int j = 0; j < outputVectorSize; j++) {
-                weights[j][i] = random.nextDouble();
+                weights[j][i] = random.nextDouble() - 0.5;
             }
             neurons[i] = new RadialBasisFunctionNeuron(argumentsCount);
             neurons[i].initValues(random);
@@ -146,9 +143,16 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         for (RadialBasisFunctionNeuron neuron : neurons) {
             double[] curCenter = Arrays.copyOf(meanPoint.v(), meanPoint.v().length);
             for (int i = 0; i < argumentsCount; i++) {
-                curCenter[i] += (random.nextDouble() - 0.5) * 1e-6;
+                curCenter[i] += (random.nextDouble() - 0.5) * 1e-12;
             }
             neuron.setCenter(new Vector(curCenter));
+        }
+    }
+
+    private void initKMeans2(List<? extends Data> dataSet) {
+        Collections.shuffle(dataSet);
+        for (RadialBasisFunctionNeuron neuron : neurons) {
+            neuron.setCenter(dataSet.get(random.nextInt(dataSet.size())).asVector());
         }
     }
 

@@ -1,39 +1,40 @@
 import data.ClassifiedData;
+import data.Data;
 import data.DataHolder;
 import iris.IrisReader;
 import network.rbfn.RadialBasisFunctionNetwork;
+import seed.SeedReader;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Main {
 
-    private static final int INTERNAL_NEURONS_COUNT = 7;
+    private static final int INTERNAL_NEURONS_COUNT = 9;
     private static final int OUTPUT_NEURONS_COUNT = 3;
-    private static final int TRAINING_ITERATIONS = 100000;
-    private static final int TRAINING_DATA_PERCENT = 65;
+    private static final int TRAINING_ITERATIONS = 15000;
+    private static final int TRAINING_DATA_PERCENT = 70;
 
     public static void main(String[] args) {
-        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new IrisReader());
+        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader());
         dataHolder.normalizeData();
         Collections.shuffle(dataHolder.getData());
         RadialBasisFunctionNetwork network = new RadialBasisFunctionNetwork(INTERNAL_NEURONS_COUNT, dataHolder.getVectorSize(), OUTPUT_NEURONS_COUNT);
 
-        network.trainKMeans(dataHolder.getData(), 322);
+        network.trainKMeans(dataHolder.getData(), 100);
 
         ArrayDeque<ClassifiedData>[] seedsByClass = new ArrayDeque[OUTPUT_NEURONS_COUNT + 1];
         for (ClassifiedData data : dataHolder.getData()) {
-            if (seedsByClass[data.getClassId()] == null) {
-                seedsByClass[data.getClassId()] = new ArrayDeque<>();
+            if (data.getClassId() <= OUTPUT_NEURONS_COUNT) {
+                if (seedsByClass[data.getClassId()] == null) {
+                    seedsByClass[data.getClassId()] = new ArrayDeque<>();
+                }
+                seedsByClass[data.getClassId()].add(data);
             }
-            seedsByClass[data.getClassId()].add(data);
         }
 
         List<ClassifiedData> trainingData = new ArrayList<>();
         while (true) {
-            for (int i = 1; i <= 3; i++) {
+            for (int i = 1; i <= OUTPUT_NEURONS_COUNT; i++) {
                 trainingData.add(seedsByClass[i].pollFirst());
             }
             if (trainingData.size() >= TRAINING_DATA_PERCENT / 100.0 * dataHolder.getData().size()) {
@@ -42,15 +43,19 @@ public class Main {
         }
 
         List<ClassifiedData> testData = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= OUTPUT_NEURONS_COUNT; i++) {
             while (!seedsByClass[i].isEmpty()) {
                 testData.add(seedsByClass[i].pollFirst());
             }
         }
 
-        double prevError = Integer.MAX_VALUE;
+        double bestTraining = 0;
+        double bestTest = 0;
+        double bestIteration = 0;
+
         for (int iter = 0; iter < TRAINING_ITERATIONS; iter++) {
             double error = 0;
+            Collections.shuffle(trainingData);
             for (ClassifiedData data : trainingData) {
                 //System.out.print(Arrays.toString(network.calculateOutput(seed.asVector())) + " -> ");
                 double[] output = network.calculateOutput(data.asVector());
@@ -59,35 +64,39 @@ public class Main {
                     error += (shouldBe - output[i]) * (shouldBe - output[i]);
                 }
                 network.train(data);
-                //System.out.println(Arrays.toString(network.calculateOutput(seed.asVector())));
+                //System.out.println(Arrays.toString(network.calculateOutput(data.asVector())));
             }
-            if (error > prevError) {
-                break;
-            }
-            prevError = error;
+//            if (error > prevError) {
+//                break;
+//            }
+
             if (iter % 100 == 0) {
                 System.err.println(iter);
                 System.err.println("Error = " + error);
-                int correct = 0;
-                for (ClassifiedData data : testData) {
-                    if (data.getClassId() == network.classify(data)) {
-                        correct++;
-                    }
-                }
-
-                System.err.printf("Test correctly = %.2f percents\n", correct * 100.0 / testData.size());
-
-                correct = 0;
+                int correctTrain = 0;
                 for (ClassifiedData data : trainingData) {
                     if (data.getClassId() == network.classify(data)) {
-                        correct++;
+                        correctTrain++;
                     }
                 }
+                System.err.printf("Training correctly = %.2f percents\n", correctTrain * 100.0 / trainingData.size());
 
-                System.err.printf("Training correctly = %.2f percents\n\n", correct * 100.0 / trainingData.size());
+                int correctTest = 0;
+                for (ClassifiedData data : testData) {
+                    if (data.getClassId() == network.classify(data)) {
+                        correctTest++;
+                    }
+                }
+                System.err.printf("Test correctly = %.2f percents\n\n", correctTest * 100.0 / testData.size());
+
+                if (correctTest * 100.0 / testData.size() > bestTest) {
+                    bestTest = correctTest * 100.0 / testData.size();
+                    bestTraining = correctTrain * 100.0 / trainingData.size();
+                    bestIteration = iter;
+                }
             }
         }
 
-
+        System.err.printf("Best test = %.2f percents\n Best train = %.2f percents\n Best iteration = %s", bestTest, bestTraining, bestIteration);
     }
 }

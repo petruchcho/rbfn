@@ -22,7 +22,7 @@ class RadialBasisFunctionNeuron implements Neuron {
     void initValues(Random random) {
         for (int i = 0; i < N; i++) {
             c[i] = 0;//random.nextDouble();
-            Q[i][i] = 1.25; //22
+            Q[i][i] = 1; //22
         }
     }
 
@@ -56,7 +56,7 @@ class RadialBasisFunctionNeuron implements Neuron {
         }
         for (int j = 0; j < N; j++) {
             for (int r = 0; r < N; r++) {
-                Q[j][r] -= learningStep * deltaQ[j][r];
+                Q[j][r] += learningStep * 10 * deltaQ[j][r]; // TODO !!!!!
             }
         }
     }
@@ -84,5 +84,11 @@ class RadialBasisFunctionNeuron implements Neuron {
 
     void setCenter(Vector center) {
         this.c = Arrays.copyOf(center.v(), center.v().length);
+    }
+
+    void setSigma(double sigma) {
+        for (int i = 0; i < N; i++) {
+            Q[i][i] = sigma; //22
+        }
     }
 }
