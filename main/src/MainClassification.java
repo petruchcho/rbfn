@@ -14,6 +14,7 @@ public class MainClassification {
     private static final int TRAINING_ITERATIONS = 11000;
     private static final int TRAINING_DATA_PERCENT = 70;
     private static final double LEARNING_STEP = 1e-5;
+    private static final double INITIAL_Q = 1;
 
     public static void main(String[] args) {
         ObjectDataHolder<? extends ClassifiedData> dataHolder = new ObjectDataHolder<>(new SeedReader());
@@ -24,7 +25,8 @@ public class MainClassification {
                         INTERNAL_NEURONS_COUNT,
                         dataHolder.getVectorSize(),
                         OUTPUT_NEURONS_COUNT,
-                        LEARNING_STEP)
+                        LEARNING_STEP,
+                        INITIAL_Q)
         );
 
         network.initTrain(dataHolder.getData());
@@ -69,7 +71,7 @@ public class MainClassification {
                     int shouldBe = data.getClassId() == i ? 1 : 0;
                     error += (shouldBe - output[i]) * (shouldBe - output[i]);
                 }
-                network.train(data, data.getClassId());
+                network.train(data, buildOutputFromClass(data.getClassId(), OUTPUT_NEURONS_COUNT));
             }
 
             if (iter % 100 == 0) {
@@ -100,5 +102,11 @@ public class MainClassification {
         }
 
         System.err.printf("Best test = %.2f percents\n Best train = %.2f percents\n Best iteration = %s", bestTest, bestTraining, bestIteration);
+    }
+
+    private static double[] buildOutputFromClass(int classId, int classesCount) {
+        double[] output = new double[classesCount];
+        output[classId] = 1;
+        return output;
     }
 }

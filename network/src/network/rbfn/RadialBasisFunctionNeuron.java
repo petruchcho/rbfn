@@ -19,10 +19,10 @@ class RadialBasisFunctionNeuron implements Neuron {
         Q = new double[N][N];
     }
 
-    void initValues(Random random) {
+    void initValues(Random random, double initialQ) {
         for (int i = 0; i < N; i++) {
             c[i] = 0;
-            Q[i][i] = 0.5; //22
+            Q[i][i] = initialQ; //22
         }
     }
 

@@ -2,6 +2,7 @@ import data.Data;
 import data.DataHolder;
 import data.SingleValueDataHolder;
 import data.VectorData;
+import finance.FinanceReader;
 import network.PredictionNetwork;
 import network.PredictionNetworkDecorator;
 import network.rbfn.RadialBasisFunctionNetwork;
@@ -9,20 +10,19 @@ import sinus.SinusReader;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("Duplicates")
 public class MainPrediction extends JComponent {
 
-    private static final int INTERNAL_NEURONS_COUNT = 10;
-    private static final double LEARNING_STEP = 2 * 1e-4;
+    private static final int INTERNAL_NEURONS_COUNT = 9;
+    private static final double LEARNING_STEP = 1e-5;
+    private static final double INITIAL_Q = 3.5;
 
-    private static final int WINDOW_SIZE = 5;
+    private static final int WINDOW_SIZE = 6;
 
-    private static final int TRAINING_DATA_PERCENT = 75;
+    private static final int TRAINING_DATA_PERCENT = 90;
 
     private PredictionNetwork predictionNetwork;
 
@@ -32,18 +32,16 @@ public class MainPrediction extends JComponent {
 
     public MainPrediction() {
         this.predictionNetwork = new PredictionNetworkDecorator(
-                new RadialBasisFunctionNetwork(INTERNAL_NEURONS_COUNT, WINDOW_SIZE, 1, LEARNING_STEP)
+                new RadialBasisFunctionNetwork(
+                        INTERNAL_NEURONS_COUNT,
+                        WINDOW_SIZE,
+                        1,
+                        LEARNING_STEP,
+                        INITIAL_Q
+                )
         );
         initDataSets();
         initTrainNetwork();
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                trainIteration();
-                repaint();
-            }
-        });
         trainLoop();
     }
 
@@ -55,7 +53,7 @@ public class MainPrediction extends JComponent {
 
     private void trainIteration() {
         for (PredictionData predictionData : trainingData) {
-            predictionNetwork.train(predictionData.vector, predictionData.output);
+            predictionNetwork.train(predictionData.vector, new double[]{predictionData.output});
         }
     }
 
@@ -68,7 +66,8 @@ public class MainPrediction extends JComponent {
     }
 
     private void initDataSets() {
-        dataHolder = new SingleValueDataHolder(new SinusReader(1, 1000));
+        //dataHolder = new SingleValueDataHolder(new SinusReader(1, 2500));
+        dataHolder = new SingleValueDataHolder(new FinanceReader(2));
         dataHolder.normalizeData();
 
         List<Double> trainDataValues = new ArrayList<>();
@@ -89,7 +88,7 @@ public class MainPrediction extends JComponent {
             trainingData.add(new PredictionData(new VectorData(vector), trainDataValues.get(i + WINDOW_SIZE)));
         }
 
-       //Collections.shuffle(trainingData);
+        //Collections.shuffle(trainingData);
 
         for (int i = 0; i + WINDOW_SIZE < testDataValues.size() - 1; i++) {
             double[] vector = new double[WINDOW_SIZE];
@@ -104,25 +103,26 @@ public class MainPrediction extends JComponent {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         drawData(g, Color.BLUE);
-        drawNetworkOutputTest(g, Color.GREEN);
+        drawNetworkOutputTest(g, Color.RED);
     }
 
     private void drawNetworkOutputTest(Graphics g, Color color) {
-        g.setColor(color);
-        int x = 0;
+        g.setColor(Color.GREEN);
+        int x = WINDOW_SIZE;
         for (PredictionData predictionData : trainingData) {
             int drawX = (int) Math.round(1.0 * x / dataHolder.getData().size() * getWidth());
-            double y = predictionNetwork.predictNext(predictionData.vector);
-            int drawY = (int) Math.round(y * getHeight() / 2 + getHeight() / 2);
+            double y = predictionNetwork.predictNext(predictionData.vector) + 0.01;
+            int drawY = (int) Math.round(y * getHeight() * 10);
             g.drawLine(drawX, drawY, drawX, drawY);
             x++;
         }
 
-        x = trainingData.size() + 2 * WINDOW_SIZE + 1;
+        g.setColor(color);
+        x = trainingData.size() + WINDOW_SIZE + 1;
         for (PredictionData predictionData : testData) {
             int drawX = (int) Math.round(1.0 * x / dataHolder.getData().size() * getWidth());
-            double y = predictionNetwork.predictNext(predictionData.vector);
-            int drawY = (int) Math.round(y * getHeight() / 2 + getHeight() / 2);
+            double y = predictionNetwork.predictNext(predictionData.vector) + 0.01;
+            int drawY = (int) Math.round(y * getHeight() * 10);
             g.drawLine(drawX, drawY, drawX, drawY);
             x++;
         }
@@ -132,8 +132,8 @@ public class MainPrediction extends JComponent {
         g.setColor(color);
         for (int x = 0; x < dataHolder.getData().size(); x++) {
             int drawX = (int) Math.round(1.0 * x / dataHolder.getData().size() * getWidth());
-            double y = dataHolder.getData().get(x);
-            int drawY = (int) Math.round(y * getHeight() / 2 + getHeight() / 2);
+            double y = dataHolder.getData().get(x) + 0.01;
+            int drawY = (int) Math.round(y * getHeight() * 10);
             g.drawLine(drawX, drawY, drawX, drawY);
         }
     }

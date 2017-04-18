@@ -11,15 +11,17 @@ public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
     private final int argumentsCount;
     private final int outputVectorSize;
     private final double learningStep;
+    private final double inititalQ;
 
     private RadialBasisFunctionNeuron[] neurons;
     private double[][] weights;
     private Random random = new Random();
 
-    public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize, int outputVectorSize, double learningStep) {
+    public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize, int outputVectorSize, double learningStep, double inititalQ) {
         this.argumentsCount = inputVectorSize;
         this.outputVectorSize = outputVectorSize;
         this.learningStep = learningStep;
+        this.inititalQ = inititalQ;
         weights = new double[outputVectorSize][neuronsCount + 1];
         neurons = new RadialBasisFunctionNeuron[neuronsCount];
         initValues(neuronsCount);
@@ -31,17 +33,16 @@ public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
                 weights[j][i] = random.nextDouble() - 0.5;
             }
             neurons[i] = new RadialBasisFunctionNeuron(argumentsCount);
-            neurons[i].initValues(random);
+            neurons[i].initValues(random, inititalQ);
         }
     }
 
-    private void modifyNetwork(double y, double[] d, Vector x) {
+    private void modifyNetwork(double[] y, double[] d, Vector x) {
         double[] u = calculateUVector(x);
         for (int j = 0; j < outputVectorSize; j++) {
-            int shouldBe = y == j ? 1 : 0;
-            double[] deltaW = calculateDeltaW(shouldBe, d[j], u);
+            double[] deltaW = calculateDeltaW(y[j], d[j], u);
             for (int i = 0; i < getNeuronsCount(); i++) {
-                neurons[i].modify(shouldBe, d[j], u[i], weights[j][i], x, learningStep);
+                neurons[i].modify(y[j], d[j], u[i], weights[j][i], x, learningStep);
             }
             for (int i = 0; i < weights.length; i++) {
                 weights[j][i] += learningStep * deltaW[i];
@@ -144,7 +145,7 @@ public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
     }
 
     @Override
-    public void train(Data data, double output) {
+    public void train(Data data, double[] output) {
         Vector x = data.asVector();
         modifyNetwork(output, output(data), x);
     }

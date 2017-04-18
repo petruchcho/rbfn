@@ -16,7 +16,7 @@ public class PredictionNetworkDecorator implements PredictionNetwork {
     }
 
     @Override
-    public void train(Data data, double output) {
+    public void train(Data data, double[] output) {
         neuralNetwork.train(data, output);
     }
 
