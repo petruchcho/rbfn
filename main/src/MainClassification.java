@@ -1,30 +1,37 @@
 import data.ClassifiedData;
-import data.Data;
-import data.DataHolder;
-import iris.IrisReader;
+import data.ObjectDataHolder;
+import network.ClassificationNetwork;
+import network.ClassificationNetworkDecorator;
 import network.rbfn.RadialBasisFunctionNetwork;
 import seed.SeedReader;
 
 import java.util.*;
 
-public class MainRadial {
+public class MainClassification {
 
     private static final int INTERNAL_NEURONS_COUNT = 9;
     private static final int OUTPUT_NEURONS_COUNT = 3;
-    private static final int TRAINING_ITERATIONS = 15000;
+    private static final int TRAINING_ITERATIONS = 11000;
     private static final int TRAINING_DATA_PERCENT = 70;
+    private static final double LEARNING_STEP = 1e-5;
 
     public static void main(String[] args) {
-        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader());
+        ObjectDataHolder<? extends ClassifiedData> dataHolder = new ObjectDataHolder<>(new SeedReader());
         dataHolder.normalizeData();
         Collections.shuffle(dataHolder.getData());
-        RadialBasisFunctionNetwork network = new RadialBasisFunctionNetwork(INTERNAL_NEURONS_COUNT, dataHolder.getVectorSize(), OUTPUT_NEURONS_COUNT);
+        ClassificationNetwork network = new ClassificationNetworkDecorator(
+                new RadialBasisFunctionNetwork(
+                        INTERNAL_NEURONS_COUNT,
+                        dataHolder.getVectorSize(),
+                        OUTPUT_NEURONS_COUNT,
+                        LEARNING_STEP)
+        );
 
-        network.trainKMeans(dataHolder.getData(), 100);
+        network.initTrain(dataHolder.getData());
 
-        ArrayDeque<ClassifiedData>[] seedsByClass = new ArrayDeque[OUTPUT_NEURONS_COUNT + 1];
+        ArrayDeque<ClassifiedData>[] seedsByClass = new ArrayDeque[OUTPUT_NEURONS_COUNT];
         for (ClassifiedData data : dataHolder.getData()) {
-            if (data.getClassId() <= OUTPUT_NEURONS_COUNT) {
+            if (data.getClassId() < OUTPUT_NEURONS_COUNT) {
                 if (seedsByClass[data.getClassId()] == null) {
                     seedsByClass[data.getClassId()] = new ArrayDeque<>();
                 }
@@ -34,7 +41,7 @@ public class MainRadial {
 
         List<ClassifiedData> trainingData = new ArrayList<>();
         while (true) {
-            for (int i = 1; i <= OUTPUT_NEURONS_COUNT; i++) {
+            for (int i = 0; i < OUTPUT_NEURONS_COUNT; i++) {
                 trainingData.add(seedsByClass[i].pollFirst());
             }
             if (trainingData.size() >= TRAINING_DATA_PERCENT / 100.0 * dataHolder.getData().size()) {
@@ -43,7 +50,7 @@ public class MainRadial {
         }
 
         List<ClassifiedData> testData = new ArrayList<>();
-        for (int i = 1; i <= OUTPUT_NEURONS_COUNT; i++) {
+        for (int i = 0; i < OUTPUT_NEURONS_COUNT; i++) {
             while (!seedsByClass[i].isEmpty()) {
                 testData.add(seedsByClass[i].pollFirst());
             }
@@ -57,18 +64,13 @@ public class MainRadial {
             double error = 0;
             Collections.shuffle(trainingData);
             for (ClassifiedData data : trainingData) {
-                //System.out.print(Arrays.toString(network.calculateOutput(seed.asVector())) + " -> ");
-                double[] output = network.calculateOutput(data.asVector());
+                double[] output = network.output(data);
                 for (int i = 0; i < output.length; i++) {
-                    int shouldBe = data.getClassId() - 1 == i ? 1 : 0;
+                    int shouldBe = data.getClassId() == i ? 1 : 0;
                     error += (shouldBe - output[i]) * (shouldBe - output[i]);
                 }
-                network.train(data);
-                //System.out.println(Arrays.toString(network.calculateOutput(data.asVector())));
+                network.train(data, data.getClassId());
             }
-//            if (error > prevError) {
-//                break;
-//            }
 
             if (iter % 100 == 0) {
                 System.err.println(iter);

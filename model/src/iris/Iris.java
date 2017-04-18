@@ -53,11 +53,11 @@ public class Iris implements ClassifiedData {
     public int getClassId() {
         switch (irisClass) {
             case SETOSA:
-                return 1;
+                return 0;
             case VERSICOLOUR:
-                return 2;
+                return 1;
             case VIRGINICA:
-                return 3;
+                return 2;
             default:
                 throw new RuntimeException("Unexpected class");
         }

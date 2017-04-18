@@ -1,10 +1,7 @@
 package network;
 
-import data.ClassifiedData;
 import data.Data;
 
-public interface ClassificationNetwork {
-    void train(ClassifiedData data);
-
+public interface ClassificationNetwork extends NeuralNetworkWithTeacher {
     int classify(Data data);
 }

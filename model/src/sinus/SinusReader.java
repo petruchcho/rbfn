@@ -8,10 +8,10 @@ import java.util.List;
 
 public class SinusReader implements DataReader<Double> {
 
-    private final int periodsCount;
+    private final double periodsCount;
     private final int size;
 
-    public SinusReader(int periodsCount, int size) {
+    public SinusReader(double periodsCount, int size) {
         this.periodsCount = periodsCount;
         this.size = size;
     }
@@ -21,7 +21,7 @@ public class SinusReader implements DataReader<Double> {
         List<Double> resultData = new ArrayList<>();
         double step = Math.PI * 2 * periodsCount / size;
         for (double value = 0; resultData.size() < size; value += step) {
-            resultData.add(value);
+            resultData.add(Math.sin(value));
         }
         return resultData;
     }

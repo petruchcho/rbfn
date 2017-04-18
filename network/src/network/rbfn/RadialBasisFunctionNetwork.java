@@ -1,32 +1,31 @@
 package network.rbfn;
 
-import data.ClassifiedData;
 import data.Data;
 import data.Vector;
-import network.ClassificationNetwork;
+import network.NeuralNetworkWithTeacher;
 
 import java.util.*;
 
-public class RadialBasisFunctionNetwork implements ClassificationNetwork {
+public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
 
     private final int argumentsCount;
     private final int outputVectorSize;
+    private final double learningStep;
 
     private RadialBasisFunctionNeuron[] neurons;
     private double[][] weights;
-    private double learningStep;
     private Random random = new Random();
 
-    public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize, int outputVectorSize) {
+    public RadialBasisFunctionNetwork(int neuronsCount, int inputVectorSize, int outputVectorSize, double learningStep) {
         this.argumentsCount = inputVectorSize;
         this.outputVectorSize = outputVectorSize;
+        this.learningStep = learningStep;
         weights = new double[outputVectorSize][neuronsCount + 1];
         neurons = new RadialBasisFunctionNeuron[neuronsCount];
         initValues(neuronsCount);
     }
 
     private void initValues(int neuronsCount) {
-        learningStep = 0.000005;
         for (int i = 0; i < neuronsCount; i++) {
             for (int j = 0; j < outputVectorSize; j++) {
                 weights[j][i] = random.nextDouble() - 0.5;
@@ -36,13 +35,7 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         }
     }
 
-    @Override
-    public void train(ClassifiedData data) {
-        Vector x = data.asVector();
-        modifyNetwork(data.getClassId() - 1, calculateOutput(x), x);
-    }
-
-    private void modifyNetwork(int y, double[] d, Vector x) {
+    private void modifyNetwork(double y, double[] d, Vector x) {
         double[] u = calculateUVector(x);
         for (int j = 0; j < outputVectorSize; j++) {
             int shouldBe = y == j ? 1 : 0;
@@ -76,18 +69,6 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         return u;
     }
 
-    @Override
-    public int classify(Data data) {
-        int id = 0;
-        double[] output = calculateOutput(data.asVector());
-        for (int i = 1; i < outputVectorSize; i++) {
-            if (output[i] > output[id]) {
-                id = i;
-            }
-        }
-        return id + 1;
-    }
-
     private int getNeuronsCount() {
         return neurons.length;
     }
@@ -96,20 +77,9 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         return weights[classId][weights.length - 1];
     }
 
-    public double[] calculateOutput(Vector v) {
-        double[] output = new double[outputVectorSize];
-        for (int j = 0; j < outputVectorSize; j++) {
-            output[j] = getW0(j);
-            for (int i = 0; i < neurons.length; i++) {
-                output[j] += neurons[i].output(v.v()) * weights[j][i];
-            }
-        }
-        return output;
-    }
-
-    public void trainKMeans(List<? extends Data> dataSet, int iterations) {
+    private void trainKMeans(Iterable<? extends Data> dataSet) {
         initKMeans(dataSet);
-        for (int iter = 0; iter < iterations; iter++) {
+        for (int iter = 0; iter < 100; iter++) {
             List<Data>[] clasters = new List[getNeuronsCount()];
             for (int i = 0; i < getNeuronsCount(); i++) {
                 clasters[i] = new ArrayList<>();
@@ -125,20 +95,22 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
         }
     }
 
-    private Vector calculateMeanPoint(List<? extends Data> dataSet) {
+    private Vector calculateMeanPoint(Iterable<? extends Data> dataSet) {
         double[] meanPoint = new double[argumentsCount];
+        int dataSetSize = 0;
         for (Data data : dataSet) {
             for (int i = 0; i < argumentsCount; i++) {
                 meanPoint[i] += data.getValueAt(i);
             }
+            dataSetSize++;
         }
         for (int i = 0; i < argumentsCount; i++) {
-            meanPoint[i] /= dataSet.size();
+            meanPoint[i] /= dataSetSize;
         }
         return new Vector(meanPoint);
     }
 
-    private void initKMeans(List<? extends Data> dataSet) {
+    private void initKMeans(Iterable<? extends Data> dataSet) {
         Vector meanPoint = calculateMeanPoint(dataSet);
         for (RadialBasisFunctionNeuron neuron : neurons) {
             double[] curCenter = Arrays.copyOf(meanPoint.v(), meanPoint.v().length);
@@ -164,5 +136,28 @@ public class RadialBasisFunctionNetwork implements ClassificationNetwork {
             }
         }
         return w;
+    }
+
+    @Override
+    public void initTrain(Iterable<? extends Data> dataSet) {
+        trainKMeans(dataSet);
+    }
+
+    @Override
+    public void train(Data data, double output) {
+        Vector x = data.asVector();
+        modifyNetwork(output, output(data), x);
+    }
+
+    @Override
+    public double[] output(Data data) {
+        double[] output = new double[outputVectorSize];
+        for (int j = 0; j < outputVectorSize; j++) {
+            output[j] = getW0(j);
+            for (int i = 0; i < neurons.length; i++) {
+                output[j] += neurons[i].output(data.asVector().v()) * weights[j][i];
+            }
+        }
+        return output;
     }
 }

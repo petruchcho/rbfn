@@ -34,4 +34,12 @@ public class MatrixUtils {
         }
         return Math.sqrt(length);
     }
+
+    public static double sum(double[] v) {
+        double sum = 0;
+        for (double x : v) {
+            sum += x;
+        }
+        return sum;
+    }
 }

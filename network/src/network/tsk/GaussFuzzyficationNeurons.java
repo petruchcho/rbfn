@@ -7,6 +7,6 @@ public class GaussFuzzyficationNeurons {
     private double b;
 
     public double output(double x) {
-        return 1 / (1 + Math.pow((x - c) / delta, b));
+        return 1 / (1 + Math.pow((x - c) / delta, 2 * b));
     }
 }

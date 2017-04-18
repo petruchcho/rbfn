@@ -21,8 +21,8 @@ class RadialBasisFunctionNeuron implements Neuron {
 
     void initValues(Random random) {
         for (int i = 0; i < N; i++) {
-            c[i] = 0;//random.nextDouble();
-            Q[i][i] = 1; //22
+            c[i] = 0;
+            Q[i][i] = 0.5; //22
         }
     }
 
