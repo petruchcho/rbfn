@@ -44,7 +44,7 @@ public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
             for (int i = 0; i < getNeuronsCount(); i++) {
                 neurons[i].modify(y[j], d[j], u[i], weights[j][i], x, learningStep);
             }
-            for (int i = 0; i < weights.length; i++) {
+            for (int i = 0; i < weights[j].length; i++) {
                 weights[j][i] += learningStep * deltaW[i];
             }
         }
@@ -75,7 +75,7 @@ public class RadialBasisFunctionNetwork implements NeuralNetworkWithTeacher {
     }
 
     private double getW0(int classId) {
-        return weights[classId][weights.length - 1];
+        return weights[classId][getNeuronsCount()];
     }
 
     private void trainKMeans(Iterable<? extends Data> dataSet) {
